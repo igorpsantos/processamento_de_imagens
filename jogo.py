@@ -3,7 +3,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import random
 import time
-# from PIL.Image import *
+from PIL.Image import *
 
 # variavel utilizada para iniciar o tamanho da janela
 w, h = 40, 30
@@ -23,6 +23,33 @@ posicao_obj1_y, posicao_obj2_y, posicao_obj3_y = 0.0,0.0,0.0
 esfera = gluNewQuadric()
 # variavel utilizado para mudar o cenario
 changecolor = 0
+# variavel auxiliar p/ utilização da textura
+imageID = 0
+
+def loadImage( imageName ):
+    #"""Load an image file as a 2D texture using PIL"""
+    im = open(imageName)
+    try:
+        ix, iy, image = im.size[0], im.size[1], \
+            im.tobytes("raw", "RGB", 0, -1)
+    except SystemError:
+        ix, iy, image = im.size[0], im.size[1], \
+            im.tobytes("raw", "RGBX", 0, -1)
+        
+    ID = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, ID)
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1)
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, ix, iy, 0,\
+    GL_RGB, GL_UNSIGNED_BYTE, image )
+    
+    return ID
+
+def init_textura():
+    global imageID
+    glEnable ( GL_TEXTURE_2D )
+    imageID = loadImage("nave.jpg")
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 
 class Objetos:
     def __init__(self, x, y):
@@ -40,16 +67,11 @@ class Objetos:
         glPushMatrix()
         glTranslatef(self.x,self.y,0)
         if changecolor == 0:
-            glColor3d(0.5,0.5,0)
+            glColor3d(0.0,0.8,0)
         else:
-           glColor3d(0.1,0.1,0) 
+           glColor3d(0.1,0.1,0)
+        gluQuadricTexture(esfera, True) # habilita textura na esfera
         gluSphere(esfera, 1.0, 32, 16) # desenha a esfera
-        # glBegin(GL_QUADS)
-        # glVertex2f(-1,-1)
-        # glVertex2f(1,-1)
-        # glVertex2f(0,1)
-        # glVertex2f(1,1)  
-        # glEnd()
         glPopMatrix()
     
     def timer(self):
@@ -90,9 +112,9 @@ def nave():
 
     # cria nave
     glBegin(GL_TRIANGLES)
-    glVertex2f(-1, -1)
-    glVertex2f(1, -1)
-    glVertex2f(0, 1)    
+    glTexCoord2f(0.0, 0.0); glVertex2f(-1, -1)
+    glTexCoord2f(0.0, 1.0); glVertex2f(1, -1)
+    glTexCoord2f(1.0, 1.0); glVertex2f(0, 1)    
     glEnd()
     glPopMatrix()
 
@@ -246,6 +268,7 @@ def init():
     else:
         glClearColor(1,1,1,1.0) # branco
     glViewport(0,0,w*30,h*20)
+    init_textura()
 
 def reshape( x, y ):
     glMatrixMode(GL_PROJECTION)
